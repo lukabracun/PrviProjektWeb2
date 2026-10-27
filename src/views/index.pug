@@ -7,3 +7,10 @@ html
     h1 Propusnice
     p Ukupno propusnica: #{total}
     p Aktivnih propusnica: #{active}
+
+    if user
+      p Prijavljeni ste kao #{user}
+      form(method="post" action="/logout")
+        button(type="submit") Odjava
+    else
+      a(href="/login") Prijava
