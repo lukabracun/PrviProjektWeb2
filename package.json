@@ -1,0 +1,26 @@
+{
+  "name": "prviprojektweb2",
+  "version": "1.0.0",
+  "description": "Web2 - prvi projekt (auth)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc && npm run copy-files",
+    "clean": "shx rm -rf dist",
+    "copy-files": "shx cp -r src/views dist",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "pug": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.5",
+    "shx": "^0.4.0",
+    "typescript": "^7.0.2"
+  }
+}
