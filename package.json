@@ -10,10 +10,9 @@
     "build": "npm run clean && tsc && npm run copy-files",
     "clean": "shx rm -rf dist",
     "copy-files": "shx cp -r src/views dist",
-    "start": "node dist/index.js"
+    "start": "node --env-file-if-exists=.env dist/index.js"
   },
   "dependencies": {
-    "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "pg": "^8.23.1",
     "pug": "^3.0.4"
