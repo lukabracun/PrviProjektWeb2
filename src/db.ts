@@ -1,12 +1,33 @@
 import pg from 'pg';
 
 const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
+export type PassStatus = 'ACTIVE' | 'CANCELLED';
+
+export interface Pass {
+  id: string;
+  name: string;
+  document: string;
+  issuedAt: Date;
+  status: PassStatus;
+}
+
+// Stupci iz baze preimenovani u camelCase, kako ih očekuje ostatak koda i JSON API-ja.
+const PASS_COLUMNS = `id, name, document, issued_at AS "issuedAt", status`;
+
+// Postgres baca grešku ako u UUID stupac pokušamo usporediti nešto što nije UUID.
+// Zato neispravan identifikator tretiramo kao "ne postoji" i ne šaljemo ga u bazu.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidId(id: string): boolean {
+  return UUID_RE.test(id);
+}
+
 export async function initDb(): Promise<void> {
-    await pool.query(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS passes (
       id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name      TEXT NOT NULL,
@@ -19,10 +40,49 @@ export async function initDb(): Promise<void> {
 }
 
 export async function getCounts(): Promise<{ total: number; active: number }> {
-    const result = await pool.query(`
+  const result = await pool.query(`
     SELECT COUNT(*)::int AS total,
            COUNT(*) FILTER (WHERE status = 'ACTIVE')::int AS active
     FROM passes
   `);
-    return result.rows[0];
+  return result.rows[0];
+}
+
+export async function listPasses(): Promise<Pass[]> {
+  const result = await pool.query<Pass>(
+    `SELECT ${PASS_COLUMNS} FROM passes ORDER BY issued_at DESC`
+  );
+  return result.rows;
+}
+
+export async function getPass(id: string): Promise<Pass | null> {
+  if (!isValidId(id)) return null;
+  const result = await pool.query<Pass>(
+    `SELECT ${PASS_COLUMNS} FROM passes WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function createPass(name: string, document: string): Promise<Pass> {
+  const result = await pool.query<Pass>(
+    `INSERT INTO passes (name, document) VALUES ($1, $2) RETURNING ${PASS_COLUMNS}`,
+    [name, document]
+  );
+  return result.rows[0];
+}
+
+export async function cancelPass(id: string): Promise<boolean> {
+  if (!isValidId(id)) return false;
+  const result = await pool.query(
+    `UPDATE passes SET status = 'CANCELLED' WHERE id = $1`,
+    [id]
+  );
+  return result.rowCount === 1;
+}
+
+export async function deletePass(id: string): Promise<boolean> {
+  if (!isValidId(id)) return false;
+  const result = await pool.query(`DELETE FROM passes WHERE id = $1`, [id]);
+  return result.rowCount === 1;
 }

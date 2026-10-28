@@ -12,5 +12,33 @@ html
       p Prijavljeni ste kao #{user}
       form(method="post" action="/logout")
         button(type="submit") Odjava
+
+      h2 Sve propusnice
+      if passes.length === 0
+        p Nema izdanih propusnica.
+      else
+        table(border="1" cellpadding="6")
+          thead
+            tr
+              th Ime i prezime
+              th Dokument
+              th Izdana
+              th Status
+              th Akcije
+          tbody
+            each pass in passes
+              tr
+                td
+                  a(href=`/info/${pass.id}`)= pass.name
+                td= pass.document
+                td= formatTime(pass.issuedAt)
+                td= pass.status
+                td
+                  if pass.status === 'ACTIVE'
+                    form(method="post" action=`/admin/passes/${pass.id}/cancel` style="display:inline")
+                      button(type="submit") Poništi
+                  form(method="post" action=`/admin/passes/${pass.id}/delete` style="display:inline"
+                       onsubmit="return confirm('Obrisati propusnicu?')")
+                    button(type="submit") Obriši
     else
       a(href="/login") Prijava

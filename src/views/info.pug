@@ -1,0 +1,22 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Propusnica
+  body
+    h1 Propusnica
+    p
+      strong Status: 
+      | #{pass.status === 'ACTIVE' ? 'AKTIVNA' : 'PONIŠTENA'} (#{pass.status})
+    p
+      strong Ime i prezime: 
+      | #{pass.name}
+    p
+      strong Dokument: 
+      | #{pass.document}
+    p
+      strong Vrijeme izdavanja: 
+      | #{formatTime(pass.issuedAt)}
+    p
+      strong Identifikator: 
+      | #{pass.id}
