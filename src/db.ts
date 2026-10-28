@@ -15,11 +15,8 @@ export interface Pass {
   status: PassStatus;
 }
 
-// Stupci iz baze preimenovani u camelCase, kako ih očekuje ostatak koda i JSON API-ja.
 const PASS_COLUMNS = `id, name, document, issued_at AS "issuedAt", status`;
 
-// Postgres baca grešku ako u UUID stupac pokušamo usporediti nešto što nije UUID.
-// Zato neispravan identifikator tretiramo kao "ne postoji" i ne šaljemo ga u bazu.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isValidId(id: string): boolean {
@@ -53,6 +50,16 @@ export async function listPasses(): Promise<Pass[]> {
     `SELECT ${PASS_COLUMNS} FROM passes ORDER BY issued_at DESC`
   );
   return result.rows;
+}
+
+export function toApiJson(pass: Pass) {
+  return {
+    id: pass.id,
+    name: pass.name,
+    document: pass.document,
+    issuedAt: pass.issuedAt.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    status: pass.status,
+  };
 }
 
 export async function getPass(id: string): Promise<Pass | null> {
